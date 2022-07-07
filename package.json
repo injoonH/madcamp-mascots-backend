@@ -9,6 +9,7 @@
   "author": "Injoon Hwang",
   "license": "ISC",
   "dependencies": {
+    "express": "^4.18.1",
     "ws": "^8.8.0"
   }
 }
