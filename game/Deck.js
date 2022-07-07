@@ -1,11 +1,11 @@
-import Card from './Card';
+import Card from './Card.js';
 
 class Deck {
-    constructor(nTypes, nNums) {
+    constructor(nTypes=6, nNums=11) {
         this.nTypes = nTypes;
         this.nNums = nNums;
         this.deck = [...Array(this.nTypes * this.nNums).keys()].map(e =>
-            new Card(Math.floor(e / this.nNums, e & this.nNums)));
+            new Card(Math.floor(e / this.nNums), e % this.nNums));
     }
 
     isDeckEmpty() {
