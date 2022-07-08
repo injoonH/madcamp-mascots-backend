@@ -6,16 +6,24 @@ class Deck {
         this.nNums = nNums;
         this.deck = [...Array(this.nTypes * this.nNums).keys()].map(e =>
             new Card(Math.floor(e / this.nNums), e % this.nNums));
+        this.shuffle();
     }
 
-    isDeckEmpty() {
-        return this.deck.length === 0;
+    getCardsNum() {
+        return this.deck.length;
     }
     
-    drawCard() {
-        if (this.isDeckEmpty())
+    drawCard(num=1) {
+        if (this.getCardsNum() < num)
             return null;
-        return this.deck.pop();
+        return this.deck.splice(0, num);
+    }
+
+    shuffle() {
+        for (let idx = this.getCardsNum(); idx > 0;) {
+            const randIdx = Math.floor(Math.random() * idx--);
+            [this.deck[idx], this.deck[randIdx]] = [this.deck[randIdx], this.deck[idx]];
+        }
     }
 }
 
