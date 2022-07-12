@@ -1,0 +1,8 @@
+-- @BLOCK
+CREATE TABLE Users(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nickname VARCHAR(255) UNIQUE,
+    passwd VARCHAR(255) NOT NULL,
+    played_games INT NOT NULL DEFAULT 0,
+    won_games INT NOT NULL DEFAULT 0
+);
