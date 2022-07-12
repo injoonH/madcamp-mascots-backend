@@ -6,10 +6,10 @@ class Player {
     }
 
     drawCardFromDeck(deck) {
-        const card = deck.drawCard()[0];
+        const card = deck.drawCard();
         if (card === null)
             return false;
-        this.hand.push(card);
+        this.hand.push(card[0]);
         return true;
     }
 

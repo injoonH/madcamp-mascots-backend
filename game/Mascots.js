@@ -2,30 +2,57 @@ import Deck from './Deck.js';
 import Player from './Player.js';
 
 class Mascots {
-    constructor(nTypes=6, nNums=11, nHand=5, nTable=6) {
+    constructor(playerIds, nTypes=6, nNums=11, nHand=5, nTable=6) {
+        this.deck = new Deck(this.nTypes, this.nNums);
+        this.table = this.deck.drawCard(nTable);
+
         this.nTypes = nTypes;
         this.nNums = nNums;
         this.nHand = nHand;
-        this.deck = new Deck(this.nTypes, this.nNums);
-        this.table = this.deck.drawCard(nTable);
-        this.players = {};
+        this.nTable = nTable;
+
+        this.players = playerIds.map(id => {
+            const hand = this.deck.drawCard(this.nHand);
+            if (hand === null)
+                return null;
+            return new Player(id, hand, Array(this.nTypes).fill().map(() => []));
+        });
+
+        this.turn = 0;
+        this.round = 0;
+        this.totRounds = Math.round((this.nNums * this.nTypes - this.nTable) / this.players.length) - this.nHand;
     }
 
-    joinPlayer(uid) {
-        const hand = this.deck.drawCard(this.nHand);
-        if (hand === null)
-            return false;
-        this.players[uid] = new Player(uid, hand, Array(this.nTypes).fill().map(() => []));
-        return true;
+    getCurrTurnPlayerId() {
+        return this.players[this.turn].uid;
     }
 
-    step(uid, cardIdx, doDraw=true) {
-        const player = this.players[uid];
-        if (player === undefined)
-            return false;
+    getSharedStates() {
+        return {
+            table: this.table.map(card => ({ type: card.type, num: card.num })),
+            fields: Object.fromEntries(this.players.map(player => [player.uid, player.field])),
+            deckCardsNum: this.deck.getCardsNum(),
+            currPlayerId: this.getCurrTurnPlayerId(),
+        };
+    }
+
+    getStates() {
+        const sharedStates = this.getSharedStates();
+        return Object.fromEntries(this.players.map(player => [
+            player.uid,
+            {
+                ...sharedStates,
+                hand: player.hand.map(card => ({ type: card.type, num: card.num })),
+            }
+        ]));
+    }
+
+    step(cardIdx, doDraw=true) {
+        const player = this.players[this.turn];
+        console.log(player);
         const card = player.putCardFromHand(cardIdx);
         if (card === null)
-            return false;
+            return { success: false, gameFin: false };
         if (this.table.length > card.num) {
             player.getCardsFromTable(
                 this.table
@@ -37,28 +64,32 @@ class Mascots {
         this.table.push(card);
         if (doDraw)
             player.drawCardFromDeck(this.deck);
-        return true;
+        if (++this.turn === this.players.length) {
+            this.turn = 0;
+            if (++this.round === this.totRounds)
+                return { success: true, gameFin: true };
+        }
+        return { success: true, gameFin: false };
     }
 }
 
 export default Mascots;
 
 
-const mm = new Mascots();
-const nPlayers = 3;
-for (let i = 0; i < nPlayers; ++i)
-    mm.joinPlayer(i);
-let rounds = Math.floor(mm.deck.getCardsNum() / nPlayers) + 1;
+const mm = new Mascots(['Andy', 'Bob', 'Carl', 'Dani']);
+console.log('Total Rounds:', mm.totRounds);
+console.log(mm.getStates());
 
-while (rounds--) {
-    for (let i = 0; i < nPlayers; ++i) {
-        console.log('======================================================');
-        const cardIdx = Math.floor(Math.random() * 5);
-        console.log(`Player[${i}] put:`, mm.players[i].hand[cardIdx]);
-        while (!mm.step(i, cardIdx, rounds > 0));
-        console.log(`Player[${i}] hand:`, mm.players[i].hand);
-        console.log(`Player[${i}] field:`, mm.players[i].field);
-        console.log('Remaining cards num:', mm.deck.getCardsNum());
-        console.log('Table:', mm.table);
+while (true) {
+    console.log('======================================================');
+    console.log(`ID: ${mm.getCurrTurnPlayerId()}`);
+    const cardIdx = Math.floor(Math.random() * 5);
+    const { success, gameFin } = mm.step(cardIdx);
+    if (success === false) {
+        console.log('failed')
+    } else {
+        console.log(mm.getStates());
     }
+    if (gameFin)
+        break;
 }
